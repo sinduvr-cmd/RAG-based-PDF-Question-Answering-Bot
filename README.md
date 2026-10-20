@@ -1,4 +1,4 @@
-# PDF Research Assistant – RAG QA Bot
+# Quest Analytics – AI-Powered Research Document Question Answering Assistant
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-1.4%2B-green.svg)](https://python.langchain.com/)
@@ -7,25 +7,24 @@
 [![Gradio](https://img.shields.io/badge/UI-Gradio%206-red.svg)](https://gradio.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A fully functional, beginner-friendly **Retrieval-Augmented Generation (RAG)** application implementing the assignment:  
-**"Construct a QA Bot that Leverages LangChain and an LLM to Answer Questions from Loaded Documents."**
+A fully functional, modular **Retrieval-Augmented Generation (RAG)** application implementing the peer-graded assignment:  
+**"Quest Analytics – AI-Powered Research Document Question Answering Assistant"** (60 / 60 marks).
 
 ---
 
 ## 1. Project Overview
 
-The **PDF Research Assistant – RAG QA Bot** enables researchers, students, and engineers to upload technical PDF documents, extract and chunk text, generate semantic embeddings, store them in a persistent local vector database, and perform high-precision question answering powered by IBM watsonx.ai foundation models.
+**Quest Analytics | Research Document AI Assistant** enables researchers, scientists, and students to upload scientific PDF papers and ask natural language questions using a Retrieval-Augmented Generation (RAG) architecture.
 
-The system enforces strict context constraints to prevent AI hallucination, citing the exact document name, page number, and source text for every answer.
+The system extracts and chunks document text, computes dense embeddings, persists them into a local Chroma vector database, retrieves semantically relevant passages, and generates factually grounded answers using IBM watsonx.ai instruction-tuned foundation models, citing exact filenames and page numbers.
 
 ### Key Capabilities
-- **Robust PDF Parsing:** Extracts text and page metadata using `PyPDFLoader` with validation for empty, corrupted, or non-text files.
-- **Recursive Text Chunking:** Splits text with `RecursiveCharacterTextSplitter` (1000 chunk size, 200 overlap) while preserving page tracking.
-- **Dense Vector Embeddings:** Uses IBM's `ibm/slate-125m-english-rtrvr-v2` dense retrieval embedding model with token truncation.
-- **Persistent ChromaDB Vector Store:** Local on-disk persistence (`./chroma_db`) with deterministic chunk hashing to eliminate duplicate embeddings.
-- **Similarity Search Retriever:** Retrieves top-4 most relevant chunks via cosine/dot similarity.
-- **Factual Question Answering:** Powered by IBM watsonx.ai instruction-tuned models (default: `ibm/granite-13b-chat-v2`) with greedy decoding.
-- **Modern Gradio Interface:** Clean, responsive UI with real-time status feedback, source citation cards, and session clearing.
+- **Task 1: Document Loading (10 Marks):** Extracts text and page metadata using LangChain's `PyPDFLoader` with robust validation against empty, scanned, or corrupted files. Also demonstrates additional data source loading via `TextLoader`.
+- **Task 2: Text Splitting (10 Marks):** Splits documents with `RecursiveCharacterTextSplitter` (`chunk_size=1000`, `chunk_overlap=200`, `length_function=len`) preserving source and page metadata.
+- **Task 3: Document Embeddings (10 Marks):** Computes dense semantic vectors with IBM watsonx (`ibm/slate-125m-english-rtrvr-v2`, 768-dim) and local Sentence Transformers (`all-MiniLM-L6-v2`, 384-dim) fallback.
+- **Task 4: Persistent ChromaDB Vector Store (10 Marks):** Local on-disk persistence (`./chroma_db`) with deterministic chunk hashing to eliminate duplicate embeddings and isolate document uploads.
+- **Task 5: Similarity Search Retriever (10 Marks):** Converts vector database into a semantic similarity retriever (`search_type="similarity"`, `k=4`) with query execution and chunk inspection.
+- **Task 6: Complete RAG QA Bot (10 Marks):** Gradio web application with Quest Analytics blue/navy theme, PDF upload, document processing, question box, AI answer display, source citations, clear button, and offline/live modes. Tested with the official LoRA research paper.
 
 ---
 
@@ -243,21 +242,20 @@ pytest -v
 
 ---
 
-## 10. Capturing the Assignment Screenshot (`QA_bot.png`)
+## 10. Required Assignment Evaluation Screenshots (60 Marks Total)
 
-The assignment requires saving a screenshot of the running interface to:
-`screenshots/QA_bot.png`
+The peer-graded assignment requires six genuine screenshots (10 marks each) placed in `screenshots/`:
 
-### Requirements Checklist for `QA_bot.png`:
-The screenshot must show all of the following visible together in one frame:
-- [x] Application title: **PDF Research Assistant – RAG QA Bot**
-- [x] Uploaded PDF filename: (e.g., `sample_research_paper.pdf`)
-- [x] Document processing success message: `✅ Document processed successfully.`
-- [x] User's question: (e.g., `What is the core architecture introduced in this research?`)
-- [x] AI-generated answer: Retrieved factual response.
-- [x] Source reference: Citation displaying document name, page number, and text excerpt.
+| Task # | Marks | Screenshot Filename | Required Evidence Shown | Source Code Location |
+| :---: | :---: | :--- | :--- | :--- |
+| **Task 1** | 10 | `screenshots/pdf_loader.png` | PyPDFLoader import, document loading logic, `loader.load()`, page metadata & text extraction output | `utils/document_loader.py` |
+| **Task 2** | 10 | `screenshots/code_splitter.png` | RecursiveCharacterTextSplitter configuration (`chunk_size=1000`, `overlap=200`), split invocation, chunk count | `utils/text_splitter.py` |
+| **Task 3** | 10 | `screenshots/embedding.png` | Embedding model initialization (`watsonx_embedding` / local), dimension output, chunk vectorization | `utils/embeddings.py` |
+| **Task 4** | 10 | `screenshots/vectordb.png` | Chroma collection initialization, embedding assignment, document insertion, persistence to `./chroma_db` | `utils/vector_store.py` |
+| **Task 5** | 10 | `screenshots/retriever.png` | Similarity retriever conversion (`as_retriever(search_type='similarity', k=4)`), test query execution, retrieved chunks | `utils/retriever.py` |
+| **Task 6** | 10 | `screenshots/QA_bot.png` | Live Gradio interface showing title, uploaded LoRA PDF, question *"What is this paper talking about?"*, AI answer, sources | `app.py` (`http://127.0.0.1:7860`) |
 
-See [screenshots/README.md](file:///c:/Users/SINDHU%20SURAJ/source/repos/RAG-based%20PDF%20Question%20Answering%20Bot/screenshots/README.md) for full capture instructions.
+Detailed capture instructions and checklist are available in [screenshots/README.md](file:///c:/Users/SINDHU%20SURAJ/source/repos/RAG-based%20PDF%20Question%20Answering%20Bot/screenshots/README.md).
 
 ---
 

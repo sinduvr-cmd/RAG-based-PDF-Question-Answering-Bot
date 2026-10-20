@@ -1,4 +1,4 @@
-# PDF Research Assistant – RAG QA Bot Dependencies
+# Quest Analytics – AI-Powered Research Document Question Answering Assistant
 # Tested on Python 3.11 with LangChain ecosystem, IBM watsonx.ai, ChromaDB, and Gradio
 
 # Core LangChain Framework
@@ -12,11 +12,15 @@ langchain-text-splitters>=1.1.0,<2.0.0
 langchain-ibm>=1.1.0,<2.0.0
 ibm-watsonx-ai>=1.8.0,<2.0.0
 
+# Local Embeddings (Sentence Transformers fallback)
+sentence-transformers>=3.0.0,<7.0.0
+langchain-huggingface>=1.2.0,<2.0.0
+
 # Vector Database
 langchain-chroma>=1.1.0,<2.0.0
 chromadb>=1.5.0,<2.0.0
 
-# PDF Processing
+# PDF & Document Processing
 pypdf>=6.0.0,<7.0.0
 
 # User Interface

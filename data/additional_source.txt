@@ -1,0 +1,2 @@
+Low-Rank Adaptation (LoRA) reduces trainable parameters by decomposing weight updates.
+This sample text file demonstrates LangChain's TextLoader integration.

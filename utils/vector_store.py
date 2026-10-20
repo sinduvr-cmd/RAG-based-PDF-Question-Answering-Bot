@@ -1,6 +1,7 @@
 """
-Chroma Vector Database Module for PDF Research Assistant.
-Manages persistent local embedding storage, deduplication, and similarity search.
+Chroma Vector Database Module for Quest Analytics – Research Document AI Assistant.
+Task 4: Initializes Chroma collections, stores document chunks with embeddings,
+preserves metadata, configures local persistence, and prevents duplicate indexing.
 """
 
 import os
@@ -11,7 +12,7 @@ from typing import List, Optional
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 
-from utils.embeddings import watsonx_embedding
+from utils.embeddings import watsonx_embedding, get_embeddings_model
 
 
 def _generate_chunk_id(chunk: Document, source_name: str) -> str:
@@ -52,7 +53,7 @@ def vector_database(
     Stores document embeddings in an isolated Chroma index; persistence is opt-in.
 
     Features:
-    - Automatically initializes watsonx_embedding() if not provided.
+    - Automatically initializes watsonx_embedding() or Sentence Transformers if not provided.
     - Generates deterministic IDs to prevent duplicate indexing when the same PDF is re-uploaded.
     - Scopes the collection so only documents from the current upload/session are retrieved,
       with optional persistent on-disk storage in `persist_directory`.
@@ -75,7 +76,10 @@ def vector_database(
 
     # 1. Resolve embedding function
     if embedding_function is None:
-        embedding_function = watsonx_embedding()
+        try:
+            embedding_function = watsonx_embedding()
+        except Exception:
+            embedding_function, _ = get_embeddings_model(prefer_watsonx=False)
 
     # 2. Determine source filename from metadata
     source_name = chunks[0].metadata.get("source", "uploaded_doc")
@@ -92,8 +96,12 @@ def vector_database(
     # Content and embedding configuration isolate revisions and incompatible vectors.
     identity = repr([(c.metadata, c.page_content) for c in chunks])
     model = getattr(embedding_function, "model_id", None)
-    config = (type(embedding_function).__module__, type(embedding_function).__name__,
-              model, getattr(embedding_function, "size", None))
+    config = (
+        type(embedding_function).__module__,
+        type(embedding_function).__name__,
+        model,
+        getattr(embedding_function, "size", None),
+    )
     fingerprint = hashlib.sha256((identity + repr(config)).encode()).hexdigest()[:24]
     col_name = _sanitize_collection_name(col_name[:30] + "_" + fingerprint)
 

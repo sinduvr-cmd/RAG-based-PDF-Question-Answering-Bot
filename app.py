@@ -1,7 +1,7 @@
 """
-PDF Research Assistant – RAG QA Bot
-A Gradio-based web application leveraging LangChain, IBM watsonx.ai, and ChromaDB
-for question answering over uploaded PDF research documents.
+Quest Analytics | Research Document AI Assistant
+A professional Gradio web application leveraging LangChain, IBM watsonx.ai, ChromaDB,
+and Sentence Transformers for question answering over uploaded scientific research documents.
 """
 
 import os
@@ -21,7 +21,7 @@ load_dotenv()
 
 from utils.document_loader import document_loader
 from utils.text_splitter import text_splitter
-from utils.embeddings import watsonx_embedding
+from utils.embeddings import watsonx_embedding, get_embeddings_model
 from utils.vector_store import vector_database
 from utils.retriever import retriever_pipeline
 from utils.llm import get_llm
@@ -48,7 +48,7 @@ def check_watsonx_credentials() -> Tuple[bool, str]:
     if missing:
         msg = (
             f"⚠️ Watsonx Credentials Incomplete: Missing {', '.join(missing)} in .env. "
-            "Please configure your .env file or enable Mock Mode for offline UI testing."
+            "Please configure your .env file or enable Offline Local Mode for local testing."
         )
         return False, msg
     return True, "✅ IBM watsonx.ai credentials loaded successfully."
@@ -72,26 +72,32 @@ def process_document(
     filename = Path(file_path).name
 
     try:
-        # Step 1: Load PDF
+        # Step 1: Load PDF using PyPDFLoader
         documents = document_loader(file_path)
         num_pages = len(documents)
 
-        # Step 2: Split text into chunks
+        # Step 2: Split text into chunks using RecursiveCharacterTextSplitter
         chunks = text_splitter(documents)
         num_chunks = len(chunks)
 
-        # Offline retrieval is deterministic and does not call IBM or use random vectors.
-        from utils.local_retrieval import LocalRetriever
+        # Step 3: Embeddings & Vector Store
         if use_mock_mode:
+            from utils.local_retrieval import LocalRetriever
             retriever = LocalRetriever(chunks)
-            status_prefix = "[Offline local retrieval; no IBM generation] "
+            status_prefix = "[Offline Local Mode Active] "
         else:
             has_creds, cred_msg = check_watsonx_credentials()
             if not has_creds:
-                return f"Configuration Error: {cred_msg}", {}
-            vectordb = vector_database(chunks, embedding_function=watsonx_embedding())
-            retriever = vectordb.as_retriever(search_kwargs={"k": 8})
-            status_prefix = "[Live IBM watsonx] "
+                return (
+                    f"Configuration Error: {cred_msg}\n\n"
+                    "Tip: Check 'Enable Offline Local Mode' below to test with local embeddings.",
+                    {},
+                )
+            # Resolve embeddings model (IBM watsonx or local Sentence Transformers fallback)
+            embedding_fn, emb_name = get_embeddings_model()
+            vectordb = vector_database(chunks, embedding_function=embedding_fn)
+            retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 4})
+            status_prefix = f"[{emb_name}] "
 
         # Update session state
         session_state = {
@@ -139,7 +145,10 @@ def answer_question(
     try:
         if use_mock_mode:
             result = question_answering(
-                file=file_path, query=question, retriever=retriever, offline=True,
+                file=file_path,
+                query=question,
+                retriever=retriever,
+                offline=True,
             )
         else:
             has_creds, cred_msg = check_watsonx_credentials()
@@ -164,43 +173,46 @@ def clear_session() -> Tuple[None, str, str, str, str, dict]:
 
 
 # ---------------------------------------------------------------------------
-# Gradio User Interface Construction
+# Gradio User Interface Construction (Professional Blue / Dark Navy Theme)
 # ---------------------------------------------------------------------------
 CUSTOM_CSS = """
 .gradio-container {
-    max-width: 1200px !important;
+    max-width: 1240px !important;
     margin: auto !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .header-box {
     text-align: center;
-    padding: 18px 24px;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 22px 28px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
     color: #f8fafc;
     border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 22px;
+    box-shadow: 0 4px 10px -1px rgba(15, 23, 42, 0.4);
+    border: 1px solid #1e40af;
 }
 .header-box h1 {
-    font-size: 2.1rem;
+    font-size: 2.15rem;
     font-weight: 700;
     margin-bottom: 6px;
     color: #ffffff;
+    letter-spacing: -0.02em;
 }
 .header-box p {
     font-size: 1.05rem;
-    color: #94a3b8;
+    color: #cbd5e1;
     margin: 0;
 }
 .status-box textarea {
-    font-family: monospace !important;
+    font-family: Consolas, Monaco, monospace !important;
     font-size: 0.92rem !important;
 }
 """
 
+
 def create_demo():
-    """Build the UI when launching; allow offline handler tests without sockets."""
-    with gr.Blocks(title="PDF Research Assistant – RAG QA Bot") as demo:
+    """Build the UI when launching."""
+    with gr.Blocks(title="Quest Analytics | Research Document AI Assistant") as demo:
         # Session state dictionary
         session_state = gr.State({})
 
@@ -208,8 +220,8 @@ def create_demo():
         gr.HTML(
             """
             <div class="header-box">
-                <h1>PDF Research Assistant – RAG QA Bot</h1>
-                <p>Upload your research PDF and ask questions using AI-powered document retrieval.</p>
+                <h1>Quest Analytics | Research Document AI Assistant</h1>
+                <p>Upload scientific research papers and ask questions using Retrieval-Augmented Generation.</p>
             </div>
             """
         )
@@ -220,12 +232,14 @@ def create_demo():
                 gr.Markdown("### 📄 Document Ingestion")
                 pdf_input = gr.File(
                     label="Upload PDF Research Document",
-                    file_types=[".pdf"],
+                    file_types=[".pdf", ".txt"],
                     file_count="single",
                 )
 
+                process_btn = gr.Button("⚙️ Process Document", variant="secondary")
+
                 status_output = gr.Textbox(
-                    label="Document Processing Status",
+                    label="Processing Status",
                     value="Upload a research PDF to begin.",
                     lines=4,
                     interactive=False,
@@ -235,16 +249,17 @@ def create_demo():
                 mock_checkbox = gr.Checkbox(
                     label="Enable Offline Local Mode (Source excerpts; no IBM generation)",
                     value=False,
-                    info="Uncheck to use the IBM embedding and chat models configured in .env.",
+                    info="Uncheck to use IBM watsonx foundation models configured in .env.",
                 )
 
                 with gr.Accordion("ℹ️ IBM watsonx Configuration Info", open=False):
                     creds_ok, creds_info = check_watsonx_credentials()
                     gr.Markdown(
                         f"**Connection Status:** {creds_info}\n\n"
-                        f"• **Embedding Model:** `{os.getenv('WATSONX_EMBEDDING_MODEL_ID') or 'ibm/slate-125m-english-rtrvr-v2'}`\n"
-                        f"• **LLM Model:** `{os.getenv('WATSONX_LLM_MODEL_ID') or 'ibm/granite-13b-chat-v2'}`\n"
-                        "• **Vector Store:** ChromaDB (isolated in-memory upload index)"
+                        f"• **Preferred LLM:** `mistralai/mixtral-8x7b-instruct-v01`\n"
+                        f"• **Fallback LLM:** `ibm/granite-13b-chat-v2`\n"
+                        f"• **Embedding Model:** `ibm/slate-125m-english-rtrvr-v2` (Local: `all-MiniLM-L6-v2`)\n"
+                        f"• **Vector Store:** ChromaDB (`./chroma_db`)"
                     )
 
                 clear_btn = gr.Button("🗑️ Clear / Reset Session", variant="secondary")
@@ -254,7 +269,7 @@ def create_demo():
                 gr.Markdown("### 💬 Document Question Answering")
                 question_input = gr.Textbox(
                     label="Ask a Question",
-                    placeholder="e.g., What are the main contributions and findings of this research?",
+                    placeholder="e.g., What is this paper talking about? / What is Low-Rank Adaptation (LoRA)?",
                     lines=2,
                 )
 
@@ -263,12 +278,12 @@ def create_demo():
                 answer_output = gr.Textbox(
                     label="AI-Generated Answer",
                     placeholder="The AI answer retrieved from the document will appear here...",
-                    lines=5,
+                    lines=6,
                     interactive=False,
                 )
 
                 sources_output = gr.Markdown(
-                    label="Source References",
+                    label="Retrieved Document Sources",
                     value="*Source citations and page references will appear here after asking a question.*",
                 )
 
@@ -277,6 +292,13 @@ def create_demo():
         # -----------------------------------------------------------------------
         # When PDF is uploaded or changed, trigger document processing
         pdf_input.change(
+            fn=process_document,
+            inputs=[pdf_input, mock_checkbox, session_state],
+            outputs=[status_output, session_state],
+        )
+
+        # Explicit Document Processing Button
+        process_btn.click(
             fn=process_document,
             inputs=[pdf_input, mock_checkbox, session_state],
             outputs=[status_output, session_state],
@@ -309,11 +331,12 @@ def create_demo():
             inputs=[],
             outputs=[pdf_input, status_output, question_input, answer_output, sources_output, session_state],
         )
+
     return demo
 
 
 if __name__ == "__main__":
-    print("Launching PDF Research Assistant – RAG QA Bot on http://127.0.0.1:7860 ...")
+    print("Launching Quest Analytics | Research Document AI Assistant on http://127.0.0.1:7860 ...")
     demo = create_demo()
     demo.launch(
         server_name="127.0.0.1",

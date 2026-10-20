@@ -312,6 +312,13 @@ with gr.Blocks(title="PDF Research Assistant – RAG QA Bot") as demo:
         outputs=[status_output, session_state],
     )
 
+    # When Mock Mode checkbox is toggled, dynamically re-process the active document
+    mock_checkbox.change(
+        fn=process_document,
+        inputs=[pdf_input, mock_checkbox, session_state],
+        outputs=[status_output, session_state],
+    )
+
     # When Ask Question is clicked
     ask_btn.click(
         fn=answer_question,

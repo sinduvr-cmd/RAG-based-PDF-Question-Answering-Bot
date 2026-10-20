@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Vector database local persistence
+chroma_db/
+test_chroma/
+test_chroma_db/
+test_db/
+*.parquet
+
+# Data directory uploads (preserve folder structure via .gitkeep)
+data/uploads/*
+!data/uploads/.gitkeep
+
+# Sensitive local configuration
+.env
+.env.local
+
+# Pytest & test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

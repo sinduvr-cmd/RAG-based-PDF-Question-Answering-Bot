@@ -1,0 +1,131 @@
+%PDF-1.3
+%‚„œ”
+1 0 obj
+<<
+/Producer (pypdf)
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Count 3
+/Kids [ 4 0 R 5 0 R 6 0 R ]
+>>
+endobj
+3 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+4 0 obj
+<<
+/Type /Page
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+>>
+>>
+/MediaBox [ 0.0 0.0 612 792 ]
+/Parent 2 0 R
+/Contents <<
+/Length 782
+>>
+stream
+BT
+/F1 11 Tf
+50 720 Td
+16 TL
+(Title: Attention Is All You Need - Research Paper Overview) '
+() '
+(Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The Transformer is the first transduction model relying entirely on self-attention to compute representations of its input and output without using sequence-aligned RNNs or convolution.) '
+() '
+(1. Introduction: Recurrent neural networks, long short-term memory \(LSTM\) and gated recurrent neural networks have been firmly established as state-of-the-art approaches in sequence modeling. However, sequential computation precludes parallelization within training examples, which becomes critical at longer sequence lengths.) '
+ET
+endstream
+>>
+endobj
+5 0 obj
+<<
+/Type /Page
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+>>
+>>
+/MediaBox [ 0.0 0.0 612 792 ]
+/Parent 2 0 R
+/Contents <<
+/Length 821
+>>
+stream
+BT
+/F1 11 Tf
+50 720 Td
+16 TL
+(2. Model Architecture: The Transformer follows an encoder-decoder structure using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder.) '
+() '
+(2.1 Attention Mechanism: An attention function can be described as mapping a query and a set of key-value pairs to an output. We compute the attention function on a set of queries simultaneously, packed together into a matrix Q.) '
+() '
+(2.2 Scaled Dot-Product Attention: We compute the dot products of the query with all keys, divide each by square root of d_k, and apply a softmax function to obtain the weights on the values.) '
+() '
+(2.3 Multi-Head Attention: Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions.) '
+ET
+endstream
+>>
+endobj
+6 0 obj
+<<
+/Type /Page
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+>>
+>>
+/MediaBox [ 0.0 0.0 612 792 ]
+/Parent 2 0 R
+/Contents <<
+/Length 645
+>>
+stream
+BT
+/F1 11 Tf
+50 720 Td
+16 TL
+(3. Training and Results: On the WMT 2014 English-to-German translation task, the big transformer model establishes a new state-of-the-art BLEU score of 28.4, outperforming the best existing models by over 2 BLEU points.) '
+() '
+(4. Conclusion: In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder architectures with multi-headed self-attention. For translation tasks, the Transformer can be trained significantly faster than architectures based on recurrent or convolutional layers.) '
+ET
+endstream
+>>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000054 00000 n 
+0000000125 00000 n 
+0000000174 00000 n 
+0000001167 00000 n 
+0000002199 00000 n 
+trailer
+<<
+/Size 7
+/Root 3 0 R
+/Info 1 0 R
+>>
+startxref
+3055
+%%EOF

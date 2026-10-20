@@ -18,7 +18,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from langchain_core.documents import Document
-from langchain_core.embeddings import FakeEmbeddings
+from langchain_core.embeddings import FakeEmbeddings, DeterministicFakeEmbedding
 from langchain_core.language_models.fake import FakeListLLM
 
 from utils.document_loader import document_loader
@@ -191,7 +191,7 @@ class TestVectorStore:
     def test_vector_database_creation_and_deduplication(self, sample_documents):
         """Verify persistent Chroma vector store creation and duplicate prevention."""
         chunks = text_splitter(sample_documents, chunk_size=200, chunk_overlap=50)
-        mock_embedding = FakeEmbeddings(size=32)
+        mock_embedding = DeterministicFakeEmbedding(size=32)
         test_dir = "./test_chroma_db"
 
         # 1. Initial indexing
@@ -232,7 +232,7 @@ class TestRetrieverPipeline:
 
     def test_retriever_pipeline_end_to_end(self):
         """Verify that retriever_pipeline executes steps 1-5 and retrieves top-k chunks."""
-        mock_embedding = FakeEmbeddings(size=32)
+        mock_embedding = DeterministicFakeEmbedding(size=32)
         retriever = retriever_pipeline(
             SAMPLE_PDF_PATH,
             embedding_function=mock_embedding,
@@ -288,7 +288,7 @@ class TestQuestionAnsweringAgent:
 
     def test_qa_agent_with_mock_llm_and_retriever(self, sample_documents):
         """Verify the full question_answering flow with custom prompt and source citations."""
-        mock_embedding = FakeEmbeddings(size=32)
+        mock_embedding = DeterministicFakeEmbedding(size=32)
         vectordb = vector_database(
             sample_documents,
             embedding_function=mock_embedding,
@@ -297,8 +297,9 @@ class TestQuestionAnsweringAgent:
         )
         retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 2})
 
-        expected_answer = "The Transformer model uses an encoder-decoder structure without recurrence."
-        mock_llm = FakeListLLM(responses=[expected_answer])
+        expected_answer = "The Transformer model uses an encoder-decoder structure."
+        import json
+        mock_llm = FakeListLLM(responses=[json.dumps({"evidence": [{"source": i + 1, "quote": expected_answer} for i, d in enumerate(retriever.invoke("What structure does the Transformer use?")) if expected_answer in d.page_content]})])
 
         result = question_answering(
             file=SAMPLE_PDF_PATH,
@@ -307,7 +308,7 @@ class TestQuestionAnsweringAgent:
             llm=mock_llm,
         )
 
-        assert result["answer"] == expected_answer
+        assert result["answer"] == expected_answer + " [Source 1]"
         assert "sample_paper.pdf" in result["sources"]
         assert len(result["source_documents"]) > 0
 

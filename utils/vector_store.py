@@ -21,7 +21,7 @@ def _generate_chunk_id(chunk: Document, source_name: str) -> str:
     page = chunk.metadata.get("page", 0)
     chunk_idx = chunk.metadata.get("chunk_index", 0)
     # Combine source, page, chunk index, and snippet hash
-    text_snippet = chunk.page_content.strip()[:100]
+    text_snippet = chunk.page_content
     raw_key = f"{source_name}_p{page}_c{chunk_idx}_{text_snippet}"
     return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()[:32]
 
@@ -88,6 +88,14 @@ def vector_database(
         col_name = _sanitize_collection_name(raw_name)
     else:
         col_name = _sanitize_collection_name(collection_name)
+
+    # Content and embedding configuration isolate revisions and incompatible vectors.
+    identity = repr([(c.metadata, c.page_content) for c in chunks])
+    model = getattr(embedding_function, "model_id", None)
+    config = (type(embedding_function).__module__, type(embedding_function).__name__,
+              model, getattr(embedding_function, "size", None))
+    fingerprint = hashlib.sha256((identity + repr(config)).encode()).hexdigest()[:24]
+    col_name = _sanitize_collection_name(col_name[:30] + "_" + fingerprint)
 
     # 4. Ensure persist directory exists
     os.makedirs(persist_directory, exist_ok=True)

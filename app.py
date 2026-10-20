@@ -235,16 +235,16 @@ def create_demo():
                 mock_checkbox = gr.Checkbox(
                     label="Enable Offline Local Mode (Source excerpts; no IBM generation)",
                     value=False,
-                    info="Uncheck to use live IBM watsonx.ai slate-125m embeddings and granite LLM.",
+                    info="Uncheck to use the IBM embedding and chat models configured in .env.",
                 )
 
                 with gr.Accordion("ℹ️ IBM watsonx Configuration Info", open=False):
                     creds_ok, creds_info = check_watsonx_credentials()
                     gr.Markdown(
                         f"**Connection Status:** {creds_info}\n\n"
-                        "• **Embedding Model:** `ibm/slate-125m-english-rtrvr-v2`\n"
-                        "• **LLM Model:** `ibm/granite-13b-chat-v2`\n"
-                        "• **Vector Store:** ChromaDB (`./chroma_db`)"
+                        f"• **Embedding Model:** `{os.getenv('WATSONX_EMBEDDING_MODEL_ID') or 'ibm/slate-125m-english-rtrvr-v2'}`\n"
+                        f"• **LLM Model:** `{os.getenv('WATSONX_LLM_MODEL_ID') or 'ibm/granite-13b-chat-v2'}`\n"
+                        "• **Vector Store:** ChromaDB (isolated in-memory upload index)"
                     )
 
                 clear_btn = gr.Button("🗑️ Clear / Reset Session", variant="secondary")

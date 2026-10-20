@@ -265,7 +265,7 @@ class TestLLMConfiguration:
 
     def test_llm_instantiation_parameters(self):
         """Verify that WatsonxLLM receives greedy / low temperature parameters."""
-        with patch("utils.llm.WatsonxLLM") as mock_llm_cls:
+        with patch("utils.llm.ChatWatsonx") as mock_llm_cls:
             mock_llm_cls.return_value = MagicMock()
             llm = get_llm(
                 apikey="mock_key",
@@ -276,8 +276,8 @@ class TestLLMConfiguration:
             mock_llm_cls.assert_called_once()
             call_kwargs = mock_llm_cls.call_args.kwargs
             assert call_kwargs["model_id"] == "ibm/granite-13b-chat-v2"
-            assert call_kwargs["params"]["decoding_method"] == "greedy"
-            assert call_kwargs["params"]["temperature"] == 0.1
+            assert call_kwargs["params"]["max_tokens"] == 1200
+            assert call_kwargs["params"]["temperature"] == 0
             assert llm is not None
 
 

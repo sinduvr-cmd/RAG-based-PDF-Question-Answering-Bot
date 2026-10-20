@@ -41,3 +41,27 @@ def test_failed_upload_clears_previous_document():
     from app import process_document
     status, state = process_document(None, True, {"retriever": "old"})
     assert state == {}
+
+
+def test_chat_json_with_trailing_prose():
+    doc = Document(page_content="Orion MAE is 0.35 mg/L.", metadata={"page": 1})
+    retriever = LocalRetriever([doc])
+    for suffix in ["", " Additional model prose must never be shown."]:
+        llm = FakeListLLM(responses=[json.dumps({"evidence": [{"source": 1, "quote": doc.page_content}]}) + suffix])
+        result = question_answering(None, "What MAE?", retriever, llm)
+        assert result["answer"] == doc.page_content + " [Source 1]"
+    llm = FakeListLLM(responses=['{"evidence": []} No answer found.'])
+    result = question_answering(None, "What MAE?", retriever, llm)
+    assert "not available" in result["answer"]
+    assert "model did not" not in result["answer"]
+
+
+def test_default_upload_index_isolated_and_searchable():
+    docs = [Document(page_content="Orion MAE 0.35 mg/L", metadata={"page": 1})]
+    embedding = DeterministicFakeEmbedding(size=32)
+    first = vector_database(docs, embedding)
+    second = vector_database(docs, embedding)
+    assert first._collection.name != second._collection.name
+    assert first._client.get_settings().is_persistent is False
+    assert second.similarity_search("Orion MAE", k=1)[0].page_content == docs[0].page_content
+    assert first.similarity_search("Orion MAE", k=1)[0].metadata["page"] == 1

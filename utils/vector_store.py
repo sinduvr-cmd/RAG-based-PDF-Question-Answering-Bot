@@ -46,23 +46,23 @@ def vector_database(
     chunks: List[Document],
     embedding_function=None,
     collection_name: Optional[str] = None,
-    persist_directory: str = "./chroma_db",
+    persist_directory: Optional[str] = None,
 ) -> Chroma:
     """
-    Stores document chunk embeddings in a local persistent Chroma vector database.
+    Stores document embeddings in an isolated Chroma index; persistence is opt-in.
 
     Features:
     - Automatically initializes watsonx_embedding() if not provided.
     - Generates deterministic IDs to prevent duplicate indexing when the same PDF is re-uploaded.
     - Scopes the collection so only documents from the current upload/session are retrieved,
-      while preserving persistent on-disk storage in `persist_directory`.
+      with optional persistent on-disk storage in `persist_directory`.
 
     Parameters:
         chunks (List[Document]): The list of chunked Document objects.
         embedding_function: Optional embedding model (defaults to watsonx_embedding()).
         collection_name (Optional[str]): Name of the Chroma collection. Defaults to a sanitized
                                          hash based on the document source.
-        persist_directory (str): Local path for persistent vector storage (default: ./chroma_db).
+        persist_directory (str): Opt-in persistent storage path; None creates an isolated in-memory collection.
 
     Returns:
         Chroma: Persistent Chroma vector store instance ready for similarity search.
@@ -97,8 +97,15 @@ def vector_database(
     fingerprint = hashlib.sha256((identity + repr(config)).encode()).hexdigest()[:24]
     col_name = _sanitize_collection_name(col_name[:30] + "_" + fingerprint)
 
-    # 4. Ensure persist directory exists
-    os.makedirs(persist_directory, exist_ok=True)
+    # UI uploads use a fresh in-memory collection. This avoids reusing disk
+    # metadata whose HNSW segment files may be missing or held by another process.
+    # Explicit persistent stores remain available to callers and tests.
+    if persist_directory is None:
+        from uuid import uuid4
+        col_name = "session_" + uuid4().hex
+    else:
+        persist_directory = str(Path(persist_directory).resolve())
+        os.makedirs(persist_directory, exist_ok=True)
 
     # 5. Generate deterministic chunk IDs to prevent duplicate indexing
     chunk_ids = [_generate_chunk_id(chunk, source_name) for chunk in chunks]
@@ -110,12 +117,9 @@ def vector_database(
         persist_directory=persist_directory,
     )
 
-    # 7. Check existing document IDs to prevent re-embedding duplicates
-    try:
-        existing_info = vectordb.get()
-        existing_ids = set(existing_info.get("ids", []))
-    except Exception:
-        existing_ids = set()
+    # Never hide storage errors: a failed metadata read is not an empty index.
+    existing_info = vectordb.get()
+    existing_ids = set(existing_info.get("ids", []))
 
     # Filter out chunks that have already been indexed
     new_chunks = []

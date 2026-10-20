@@ -6,7 +6,7 @@ Configures and initializes IBM watsonx.ai instruction-following LLMs.
 import os
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-from langchain_ibm import WatsonxLLM
+from langchain_ibm import ChatWatsonx
 
 # Load environment variables
 load_dotenv()
@@ -25,7 +25,7 @@ def get_llm(
     project_id: Optional[str] = None,
     url: Optional[str] = None,
     generation_params: Optional[Dict[str, Any]] = None,
-) -> WatsonxLLM:
+) -> ChatWatsonx:
     """
     Initializes and returns an IBM watsonx.ai instruction-following LLM.
 
@@ -43,7 +43,7 @@ def get_llm(
         generation_params (Optional[Dict[str, Any]]): Text generation parameters.
 
     Returns:
-        WatsonxLLM: Configured LangChain LLM instance.
+        ChatWatsonx: Configured LangChain LLM instance.
 
     Raises:
         ValueError: If required credentials are missing.
@@ -78,19 +78,16 @@ def get_llm(
 
     # 3. Configure factual generation parameters (greedy / low temperature)
     default_params = {
-        "decoding_method": "greedy",
-        "max_new_tokens": 500,
-        "min_new_tokens": 1,
-        "temperature": 0.1,
-        "repetition_penalty": 1.1,
+        "max_tokens": 1200,
+        "temperature": 0,
     }
 
     if generation_params:
         default_params.update(generation_params)
 
-    # 4. Initialize WatsonxLLM
+    # 4. Initialize ChatWatsonx
     try:
-        llm = WatsonxLLM(
+        llm = ChatWatsonx(
             model_id=resolved_model_id,
             url=resolved_url,
             apikey=resolved_apikey,
@@ -100,5 +97,5 @@ def get_llm(
         return llm
     except Exception as e:
         raise RuntimeError(
-            f"Failed to initialize WatsonxLLM ({resolved_model_id}): {str(e)}"
+            f"Failed to initialize ChatWatsonx ({resolved_model_id}): {str(e)}"
         )
